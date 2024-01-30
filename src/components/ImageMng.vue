@@ -8,20 +8,29 @@
             />
         </AFormItem>
     </AForm>
-    <AFlex class="batch-actions" justify="end" v-if="selectedImgs.length > 0">
-        <AButton
-            type="primary"
-            :loading="isBatchDownloading"
-            style="margin-right: 20px"
-            @click="() => batchDownload()"
-            >批量下载({{ selectedImgs.length }})</AButton
-        >
-        <AButton :loading="isZipDownloading" @click="() => zipDownload()"
-            >打包下载</AButton
+    <AFlex class="batch-actions" justify="end" align="center">
+        <template v-if="selectedImgs.length > 0">
+            <AButton
+                type="primary"
+                :loading="isBatchDownloading"
+                style="margin-right: 20px"
+                @click="() => batchDownload()"
+                >批量下载({{ selectedImgs.length }})</AButton
+            >
+            <AButton :loading="isZipDownloading" @click="() => zipDownload()"
+                >打包下载</AButton
+            >
+        </template>
+        <ACheckbox style="margin-left: 15px" v-model:checked="isCheckedAll"
+            >全选</ACheckbox
         >
     </AFlex>
     <ASpace size="large" wrap>
-        <ABadge v-for="item in fileList.filter(file => file.isImg)">
+        <template v-if="isFetchFileList">
+            <ASkeletonImage v-for="_ in 6" />
+        </template>
+        <AEmpty v-else-if="fileList.length === 0" description="没有找到图片" />
+        <ABadge v-else v-for="item in fileList.filter(file => file.isImg)">
             <template v-if="item.selected" #count>
                 <CheckCircleFilled style="color: green; font-size: 19px" />
             </template>
@@ -79,7 +88,11 @@ onBeforeMount(async () => {
     currentTableId.value = selection.tableId || ''
 })
 
-const { state: fileList, execute: fetchFileList } = useAsyncState(
+const {
+    state: fileList,
+    execute: fetchFileList,
+    isLoading: isFetchFileList
+} = useAsyncState(
     async (tableId: string = '') => {
         const table = await base.getTableById(tableId)
 
@@ -135,10 +148,20 @@ const { state: fileList, execute: fetchFileList } = useAsyncState(
         shallow: false
     }
 )
-watch(currentTableId, val => fetchFileList(0, val))
+watch(currentTableId, val => {
+    isCheckedAll.value = false
+    fetchFileList(0, val)
+})
 
 const selectedImgs = computed(() =>
     fileList.value.filter(item => item.selected).map(item => item.url)
+)
+
+const isCheckedAll = ref(false)
+watch(isCheckedAll, val =>
+    fileList.value.forEach(item => {
+        if (item.isImg) item.selected = val
+    })
 )
 
 const { execute: batchDownload, isLoading: isBatchDownloading } = useAsyncState(
