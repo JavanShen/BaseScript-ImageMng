@@ -11,11 +11,14 @@
     <AFlex class="batch-actions" justify="end" v-if="selectedImgs.length > 0">
         <AButton
             type="primary"
+            :loading="isBatchDownloading"
             style="margin-right: 20px"
-            @click="batchDownload"
+            @click="() => batchDownload()"
             >批量下载({{ selectedImgs.length }})</AButton
         >
-        <AButton @click="zipDownload">打包下载</AButton>
+        <AButton :loading="isZipDownloading" @click="() => zipDownload()"
+            >打包下载</AButton
+        >
     </AFlex>
     <ASpace size="large" wrap>
         <ABadge v-for="item in fileList.filter(file => file.isImg)">
@@ -61,6 +64,7 @@ import {
     DownloadOutlined
 } from '@ant-design/icons-vue'
 import { downloadUrl, packDownload } from '../utils/file'
+import { message } from 'ant-design-vue'
 
 const base = bitable.base
 
@@ -75,8 +79,6 @@ onBeforeMount(async () => {
     currentTableId.value = selection.tableId || ''
 })
 
-// const findImageByUrl = (url: string) =>
-//     imageList.value.find(item => item.url === url)
 const { state: fileList, execute: fetchFileList } = useAsyncState(
     async (tableId: string = '') => {
         const table = await base.getTableById(tableId)
@@ -139,15 +141,38 @@ const selectedImgs = computed(() =>
     fileList.value.filter(item => item.selected).map(item => item.url)
 )
 
-const batchDownload = () => {
-    selectedImgs.value.forEach((item, index) =>
-        setTimeout(() => downloadUrl(item), 1000 * index)
-    )
-}
+const { execute: batchDownload, isLoading: isBatchDownloading } = useAsyncState(
+    async () => {
+        await new Promise(res => {
+            selectedImgs.value.forEach((item, index) =>
+                setTimeout(() => {
+                    downloadUrl(item)
+                    if (index === selectedImgs.value.length - 1) res('done')
+                }, 1000 * index)
+            )
+        })
+    },
+    null,
+    {
+        immediate: false,
+        onError: () => {
+            message.error('批量下载失败')
+        }
+    }
+)
 
-const zipDownload = () => {
-    packDownload(selectedImgs.value)
-}
+const { execute: zipDownload, isLoading: isZipDownloading } = useAsyncState(
+    async () => {
+        await packDownload(selectedImgs.value)
+    },
+    null,
+    {
+        immediate: false,
+        onError: () => {
+            message.error('打包下载失败')
+        }
+    }
+)
 </script>
 
 <style scoped>
