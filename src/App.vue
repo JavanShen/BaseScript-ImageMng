@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Calculator from './components/Calculator.vue'
+import ImageMng from './components/ImageMng.vue'
 </script>
 
 <template>
     <div class="app">
-        <Calculator />
+        <ImageMng />
     </div>
 </template>

@@ -16,5 +16,6 @@ declare module 'vue' {
     ASelect: typeof import('ant-design-vue/es')['Select']
     ASpace: typeof import('ant-design-vue/es')['Space']
     Calculator: typeof import('./src/components/Calculator.vue')['default']
+    ImageMng: typeof import('./src/components/ImageMng.vue')['default']
   }
 }
