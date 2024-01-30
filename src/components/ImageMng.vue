@@ -1,6 +1,6 @@
 <template>
     <AForm>
-        <AFormItem label="选择数据表">
+        <AFormItem :label="$t('chooseTable')">
             <ASelect
                 :options="tableList"
                 :field-names="{ value: 'id', label: 'name' }"
@@ -8,61 +8,71 @@
             />
         </AFormItem>
     </AForm>
-    <AFlex class="batch-actions" justify="end" align="center">
+    <AFlex
+        v-if="fileList.length > 0"
+        class="batch-actions"
+        justify="end"
+        align="center"
+    >
         <template v-if="selectedImgs.length > 0">
             <AButton
                 type="primary"
                 :loading="isBatchDownloading"
                 style="margin-right: 20px"
                 @click="() => batchDownload()"
-                >批量下载({{ selectedImgs.length }})</AButton
+                >{{ $t('batchDownload') }} ({{ selectedImgs.length }})</AButton
             >
             <AButton :loading="isZipDownloading" @click="() => zipDownload()"
-                >打包下载</AButton
+                >{{ $t('packageDownload') }}</AButton
             >
         </template>
         <ACheckbox style="margin-left: 15px" v-model:checked="isCheckedAll"
-            >全选</ACheckbox
+            >{{ $t('checkAll') }}</ACheckbox
         >
     </AFlex>
-    <ASpace size="large" wrap>
-        <template v-if="isFetchFileList">
-            <ASkeletonImage v-for="_ in 6" />
-        </template>
-        <AEmpty v-else-if="fileList.length === 0" description="没有找到图片" />
-        <ABadge v-else v-for="item in fileList.filter(file => file.isImg)">
-            <template v-if="item.selected" #count>
-                <CheckCircleFilled style="color: green; font-size: 19px" />
+    <div style="display: flex; justify-content: center">
+        <ASpace size="large" wrap>
+            <template v-if="isFetchFileList">
+                <ASkeletonImage v-for="_ in 6" />
             </template>
-            <AImage
-                :src="item.url"
-                :height="120"
-                :width="120"
-                style="object-fit: cover"
-                :preview="{
-                    visible: item.preview,
-                    onVisibleChange: () => {
-                        item.preview = false
-                    }
-                }"
-                @error="item.isImg = false"
-                @click="item.selected = !item.selected"
-            >
-                <template #previewMask>
-                    <ASpace>
-                        <EyeFilled
-                            class="image-action"
-                            @click.stop="item.preview = true"
-                        />
-                        <DownloadOutlined
-                            class="image-action"
-                            @click.stop="downloadUrl(item.url)"
-                        />
-                    </ASpace>
+            <AEmpty
+                v-else-if="fileList.length === 0"
+                :description="$t('empty')"
+            />
+            <ABadge v-else v-for="item in fileList.filter(file => file.isImg)">
+                <template v-if="item.selected" #count>
+                    <CheckCircleFilled style="color: green; font-size: 19px" />
                 </template>
-            </AImage>
-        </ABadge>
-    </ASpace>
+                <AImage
+                    :src="item.url"
+                    :height="120"
+                    :width="120"
+                    style="object-fit: cover"
+                    :preview="{
+                        visible: item.preview,
+                        onVisibleChange: () => {
+                            item.preview = false
+                        }
+                    }"
+                    @error="item.isImg = false"
+                    @click="item.selected = !item.selected"
+                >
+                    <template #previewMask>
+                        <ASpace>
+                            <EyeFilled
+                                class="image-action"
+                                @click.stop="item.preview = true"
+                            />
+                            <DownloadOutlined
+                                class="image-action"
+                                @click.stop="downloadUrl(item.url)"
+                            />
+                        </ASpace>
+                    </template>
+                </AImage>
+            </ABadge>
+        </ASpace>
+    </div>
 </template>
 
 <script lang="ts" setup>
